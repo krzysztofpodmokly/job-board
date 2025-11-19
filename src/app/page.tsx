@@ -9,11 +9,15 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { LogInIcon } from 'lucide-react';
-import Link from 'next/link';
-import { SignedOut } from '../services/clerk/components/SignedInStatus';
-import { AppSidebarClient } from './_AppSidebarClient';
+} from "@/components/ui/sidebar";
+import { LogInIcon } from "lucide-react";
+import Link from "next/link";
+import {
+  SignedIn,
+  SignedOut,
+} from "@/services/clerk/components/SignedInStatus";
+import { AppSidebarClient } from "./_AppSidebarClient";
+import SidebarUserButton from "@/features/users/components/SidebarUserButton";
 
 const HomePage = () => {
   return (
@@ -40,13 +44,15 @@ const HomePage = () => {
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>buton</SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
+          <SignedIn>
+            <SidebarFooter>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarUserButton />
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          </SignedIn>
         </Sidebar>
         <main className="flex-1"></main>
       </AppSidebarClient>
