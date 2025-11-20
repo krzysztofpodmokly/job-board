@@ -1,3 +1,43 @@
+import { desc, eq } from 'drizzle-orm';
+import { cacheTag } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
+import { db } from '../../drizzle/db';
+import { JobListingTable } from '../../drizzle/schema';
+import { getJobListingOrganizationTag } from '../../features/jobListings/db/cache/jobListings';
+import { getCurrentOrganization } from '../../services/clerk/lib/getCurrentAuth';
+
 export default function EmployerHomePage() {
-  return "hi empoyer";
+  return (
+    <Suspense>
+      <SuspendedPage />
+    </Suspense>
+  );
+}
+
+async function SuspendedPage() {
+  const { orgId } = await getCurrentOrganization();
+
+  if (orgId == null) return null;
+
+  const jobListing = await getMostRecentJobListing(orgId);
+
+  if (jobListing == null) {
+    redirect('/employer/job-listings/new');
+  } else {
+    redirect(`/employer/job-listings/${jobListing.id}`);
+  }
+}
+
+async function getMostRecentJobListing(orgId: string) {
+  'use cache';
+
+  // TODO
+  cacheTag(getJobListingOrganizationTag(orgId));
+
+  return db.query.JobListingTable.findFirst({
+    where: eq(JobListingTable.organizationId, orgId),
+    orderBy: desc(JobListingTable.createdAt),
+    columns: { id: true }, // return only id column
+  });
 }
