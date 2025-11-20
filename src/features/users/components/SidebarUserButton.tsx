@@ -16,6 +16,8 @@ const SidebarUserButton = () => {
 const SidebarUserSuspense = async () => {
   const { user } = await getCurrentUser({ allData: true });
 
+  console.log('sidebar user', user);
+
   if (!user) {
     return (
       <SignOutButton>
