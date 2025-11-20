@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { SidebarTrigger } from '../components/ui/sidebar';
-import { useIsMobile } from '../hooks/use-mobile';
+import { ReactNode } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export const AppSidebarClient = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
