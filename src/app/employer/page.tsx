@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { db } from '../../drizzle/db';
 import { JobListingTable } from '../../drizzle/schema';
-import { getJobListingOrganizationTag } from '../../features/jobListings/db/cache/jobListings';
+import { getJobListingOrganizationTag } from '../../features/jobListings/cache/jobListings';
 import { getCurrentOrganization } from '../../services/clerk/lib/getCurrentAuth';
 
 export default function EmployerHomePage() {
