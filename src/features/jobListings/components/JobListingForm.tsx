@@ -227,7 +227,6 @@ export function JobListingForm({
                         {formatLocationRequirement(lr)}
                       </SelectItem>
                     ))}
-                    <CountrySelectItems />
                   </SelectContent>
                 </Select>
               </FormItem>
