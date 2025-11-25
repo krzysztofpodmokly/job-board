@@ -22,7 +22,6 @@ async function SidebarOrganizationSuspense() {
     getCurrentOrganization({ allData: true }),
   ]);
 
-  console.log(test);
   if (test.user == null || organization == null) {
     return (
       <SignOutButton>
