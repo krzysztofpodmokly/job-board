@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import {
   experienceLevels,
+  JobListingTable,
   jobListingTypes,
   locationRequirements,
   wageIntervals,
@@ -30,7 +31,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 import { LoadingSwap } from '../../../components/LoadingSwap';
-import { createJobListing } from '../actions/actions';
+import { createJobListing, updateJobListing } from '../actions/actions';
 import { jobListingSchema } from '../actions/schemas';
 import {
   formatExperienceLevel,
@@ -42,10 +43,26 @@ import { CountrySelectItems } from './CountrySelectItems';
 
 const NONE_SELECT_VALUE = 'none';
 
-export function JobListingForm() {
+export function JobListingForm({
+  jobListing,
+}: {
+  jobListing: Pick<
+    typeof JobListingTable.$inferSelect,
+    | 'title'
+    | 'description'
+    | 'experienceLevel'
+    | 'id'
+    | 'stateAbbreviation'
+    | 'type'
+    | 'wage'
+    | 'wageInterval'
+    | 'city'
+    | 'locationRequirement'
+  >;
+}) {
   const form = useForm({
     resolver: zodResolver(jobListingSchema),
-    defaultValues: {
+    defaultValues: jobListing ?? {
       title: '',
       description: '',
       experienceLevel: 'junior',
@@ -59,7 +76,10 @@ export function JobListingForm() {
   });
 
   async function onSubmit(data: z.infer<typeof jobListingSchema>) {
-    const res = await createJobListing(data);
+    const action = jobListing
+      ? updateJobListing.bind(null, jobListing.id)
+      : createJobListing;
+    const res = await action(data);
 
     if (res.error) {
       toast.error(res.message);
@@ -283,7 +303,7 @@ export function JobListingForm() {
           className="w-full"
         >
           <LoadingSwap isLoading={form.formState.isSubmitting}>
-            Create Job Listing
+            {jobListing ? 'Edit' : 'Create'} Job Listing
           </LoadingSwap>
         </Button>
       </form>
