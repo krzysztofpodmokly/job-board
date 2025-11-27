@@ -1,8 +1,14 @@
 'use server';
 
 import { getCurrentOrganization } from '@/services/clerk/lib/getCurrentAuth';
+import { and, eq } from 'drizzle-orm';
+import { cacheTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { db } from '../../../drizzle/db';
+import { JobListingTable } from '../../../drizzle/schema';
+import { hasOrgUserPermission } from '../../../services/clerk/lib/orgUserPermissions';
+import { getJobListingIdTag } from '../cache/jobListings';
 import {
   insertJobListing,
   updateJobListing as updateJobListingDb,
@@ -13,7 +19,7 @@ export async function createJobListing(
   unsafeData: z.infer<typeof jobListingSchema>,
 ) {
   const { orgId } = await getCurrentOrganization();
-  if (orgId == null) {
+  if (orgId == null || !(await hasOrgUserPermission('org:job_listings:create'))) {
     return {
       error: true,
       message: "You don't have permission to create a job listing",
@@ -42,7 +48,7 @@ export async function updateJobListing(
   unsafeData: z.infer<typeof jobListingSchema>,
 ) {
   const { orgId } = await getCurrentOrganization();
-  if (orgId == null) {
+  if (orgId == null || !(await hasOrgUserPermission('org:job_listings:update'))) {
     return {
       error: true,
       message: "You don't have permission to create a job listing",
@@ -53,25 +59,32 @@ export async function updateJobListing(
   if (!success) {
     return {
       error: true,
-      message: 'There was an error creating your job listing',
+      message: "You don't have permission to update a job listing",
     };
   }
 
-  // const jobListing = getJobListing(id, orgId);
+  const jobListing = getJobListing(id, orgId);
+
+  if (jobListing == null) {
+    return {
+      error: true,
+      message: 'There was an error updating your job listing',
+    };
+  }
 
   const updatedJobListing = await updateJobListingDb(id, data);
 
   redirect(`/employer/job-listings/${updatedJobListing.id}`);
 }
 
-// async function getJobListing(id: string, orgId: string) {
-//   'use cache';
-//   cacheTag(getJobListingIdTag(id));
+async function getJobListing(id: string, orgId: string) {
+  'use cache';
+  cacheTag(getJobListingIdTag(id));
 
-//   return db.query.JobListingTable.findFirst({
-//     where: and(
-//       eq(JobListingTable.id, id),
-//       eq(JobListingTable.organizationId, orgId),
-//     ),
-//   });
-// }
+  return db.query.JobListingTable.findFirst({
+    where: and(
+      eq(JobListingTable.id, id),
+      eq(JobListingTable.organizationId, orgId),
+    ),
+  });
+}
