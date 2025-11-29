@@ -13,13 +13,18 @@ import {
   insertJobListing,
   updateJobListing as updateJobListingDb,
 } from '../db/jobListings';
+import { hasReachedMaxPublishedJobListings } from '../lib/planFeatureHelpers';
+import { getNextJobListingStatus } from '../lib/utils';
 import { jobListingSchema } from './schemas';
 
 export async function createJobListing(
   unsafeData: z.infer<typeof jobListingSchema>,
 ) {
   const { orgId } = await getCurrentOrganization();
-  if (orgId == null || !(await hasOrgUserPermission('org:job_listings:create'))) {
+  if (
+    orgId == null ||
+    !(await hasOrgUserPermission('org:job_listings:create'))
+  ) {
     return {
       error: true,
       message: "You don't have permission to create a job listing",
@@ -48,7 +53,10 @@ export async function updateJobListing(
   unsafeData: z.infer<typeof jobListingSchema>,
 ) {
   const { orgId } = await getCurrentOrganization();
-  if (orgId == null || !(await hasOrgUserPermission('org:job_listings:update'))) {
+  if (
+    orgId == null ||
+    !(await hasOrgUserPermission('org:job_listings:update'))
+  ) {
     return {
       error: true,
       message: "You don't have permission to create a job listing",
@@ -75,6 +83,45 @@ export async function updateJobListing(
   const updatedJobListing = await updateJobListingDb(id, data);
 
   redirect(`/employer/job-listings/${updatedJobListing.id}`);
+}
+
+export async function toggleJobListingStatus(id: string) {
+  const error = {
+    error: true,
+    message: "You don't have permission to update a job listing status",
+  };
+  const { orgId } = await getCurrentOrganization();
+  if (orgId == null) {
+    return error;
+  }
+
+  const jobListing = await getJobListing(id, orgId);
+
+  if (jobListing == null) {
+    return error;
+  }
+
+  const newStatus = getNextJobListingStatus(jobListing.status);
+
+  if (
+    !(await hasOrgUserPermission('org:job_listings:change_status')) ||
+    (newStatus === 'published' && (await hasReachedMaxPublishedJobListings()))
+  ) {
+    return error;
+  }
+
+  await updateJobListingDb(id, {
+    status: newStatus,
+    isFeatured: newStatus === 'published' ? undefined : false,
+    postedAt:
+      newStatus === 'published' && jobListing.postedAt == null
+        ? new Date()
+        : undefined,
+  });
+
+  return {
+    error: false,
+  };
 }
 
 async function getJobListing(id: string, orgId: string) {

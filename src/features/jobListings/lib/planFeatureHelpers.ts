@@ -6,7 +6,7 @@ import { and, count, eq } from 'drizzle-orm';
 import { cacheTag } from 'next/cache';
 import { getJobListingOrganizationTag } from '../cache/jobListings';
 
-export async function hasReachedMaxFeaturedJobListings() {
+export async function hasReachedMaxPublishedJobListings() {
   const { orgId } = await getCurrentOrganization();
 
   if (orgId == null) return true;
